@@ -1,0 +1,115 @@
+<?php
+session_start();
+require_once 'db_connect.php';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
+    $message = trim($_POST['message']);
+    $errors = [];
+
+    // Validate input
+    if (empty($name)) {
+        $errors[] = "Name is required.";
+    }
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "A valid email is required.";
+    }
+    if (empty($message)) {
+        $errors[] = "Message is required.";
+    }
+
+    if (empty($errors)) {
+        // Prepare and execute SQL to store the message
+        $stmt = $conn->prepare("INSERT INTO messages (name, email, message, created_at) VALUES (?, ?, ?, NOW())");
+        $stmt->bind_param("sss", $name, $email, $message);
+        
+        if ($stmt->execute()) {
+            $success = "Your message has been sent successfully!";
+        } else {
+            $errors[] = "Failed to send message. Please try again later.";
+        }
+        $stmt->close();
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Club - Contact</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">College Club</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="contact.php">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link" href="login.php">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">Contact Us</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Get in Touch</h4>
+                    <p><strong>Email:</strong> club@college.edu</p>
+                    <p><strong>Phone:</strong> (123) 456-7890</p>
+                    <p><strong>Address:</strong> 123 College Ave, Campus City</p>
+                </div>
+                <div class="col-md-6">
+                    <?php if (!empty($errors)): ?>
+                        <div class="alert alert-danger">
+                            <?php foreach ($errors as $error): ?>
+                                <p><?php echo $error; ?></p>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php elseif (isset($success)): ?>
+                        <div class="alert alert-success"><?php echo $success; ?></div>
+                    <?php endif; ?>
+                    <form method="POST" action="contact.php" class="w-100">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="<?php echo isset($name) ? htmlspecialchars($name) : ''; ?>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" required><?php echo isset($message) ? htmlspecialchars($message) : ''; ?></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3">
+        <p>© 2025 College Club. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
